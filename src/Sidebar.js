@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./Sidebar.css";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import {
@@ -12,8 +12,34 @@ import {
 } from "@material-ui/icons";
 import SidebarChannel from "./SidebarChannel";
 import { Avatar } from "@material-ui/core";
+import { useSelector } from "react-redux";
+import { selectUser } from "./counter/userSlice";
+import db, { auth } from "./firebase";
 
 const Sidebar = () => {
+  const user = useSelector(selectUser);
+  const [channels, setChannels] = useState([]);
+
+  useEffect(() => {
+    db.collection("channels").onSnapshot((snapshot) =>
+      setChannels(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          channel: doc.data(),
+        }))
+      )
+    );
+  }, []);
+
+  const handleAddChannel = () => {
+    const channelName = prompt("enter new channel name");
+    if (channelName) {
+      db.collection("channels").add({
+        channelName: channelName,
+      });
+    }
+  };
+
   return (
     <div className="sidebar">
       <div className="sidebar__top">
@@ -25,13 +51,17 @@ const Sidebar = () => {
           <div className="sidebar__header">
             <ExpandMoreIcon />
             <h4>text Channels</h4>
-            <Add className="sidebar__addChannel" />
+            <Add onClick={handleAddChannel} className="sidebar__addChannel" />
           </div>
         </div>
-        <div className="sidebar__channelsLisr">
-          <SidebarChannel />
-          <SidebarChannel />
-          <SidebarChannel />
+        <div className="sidebar__channelsList">
+          {channels.map(({ channel, id }) => (
+            <SidebarChannel
+              key={id}
+              id={id}
+              channelName={channel.channelName}
+            />
+          ))}
         </div>
       </div>
       <div className="sidebar__voice">
@@ -46,10 +76,10 @@ const Sidebar = () => {
         </div>
       </div>
       <div className="sidebar__profile">
-        <Avatar src="https://lh3.googleusercontent.com/TZCu51BGKuho7jXhtoAcsLEqhSlJXRJsTvfZWU9RaMxyQMFju2IsCeK5cESm1KZBy4sYEt2lDb3JVvRc9vPzO_zO5Rje2mSogz3Vp68_BeBRE_94pYLJcZ_q4vUsJfU__NmW_Mtind90c2KBYcaFUu9PUV0HwRSRuEtfVE-z-BhP0pW_i6u3EdDRxn66Q34uoGzm79l0asqiDCnyg9J5kTCdkE69YpIwrQrF-5Auxs8enRh1GfVqkhuXvzz8apOZuocMgTb2xWsXnG3Z3sDplk6wr3EpoAxdNAmm5KE0WETU5VXEO0fFp-45G2oQSwKvHVRGb3GNaBsq1Wpqvgd6FH3QioDRXLxkZ_S5US8DuCrWFHmdSBK-aeQ_RlY2uhEvQVPSLlXKQO8qO9p2-gMzBkqFJsfjwWS7GMLScmnDz-fdu7gjVzcIiuon45ni5ScgeFnjmR24kzqQOp2kELH3JCDZDqZri1f5ppOMx8_-gFWoSkqN7fFt8Y2wVHEsEc8zzrLcDp3wfLZrl-fV4S22g5lUwmhEWWX3Gose8--AWQmFrNEJvRdGLt8jBoRfJy03m3NIJRrE-2m-IZct9Qwv1ScdOvoEf3ULPyWbDoGKrLYkYzqmOJ08w4fEkjlGsso20FIKIeqNLBhFmqnzvIqK0OVl5tJBE-D57ilNzia4l33afMcT3PuJkmKBodS0EC0=w490-h940-no?authuser=0" />
+        <Avatar onClick={() => auth.signOut()} src={user.photo} />
         <div className="sidebar__profileInfo">
-          <h3>shawn</h3>
-          <p>#3120</p>
+          <h3>{user.displayName}</h3>
+          <p>#{user.uid.substring(0, 5)}</p>
         </div>
         <div className="sidebar__profileIcons">
           <Mic />
