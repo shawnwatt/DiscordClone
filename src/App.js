@@ -25,7 +25,7 @@ function App() {
             displayName: authUser.displayName,
           })
         );
-        // the user ris logged in
+        // the user is logged in
       } else {
         dispatch(logout());
         // the user is logged out
